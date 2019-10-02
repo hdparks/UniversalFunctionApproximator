@@ -1,0 +1,103 @@
+<canvas id="canvas" width="300" height="300"></canvas>
+<style >
+  body{
+    background-color:black;
+  }
+
+  #canvas{
+    padding:10;
+    background-color:white;
+  }
+</style>
+
+
+<script src="ml-math.js" charset="utf-8"></script>
+<script src="NeuralNet.js" charset="utf-8"></script>
+<script>
+  canvas = document.getElementById('canvas');
+  ctx = canvas.getContext('2d');
+
+  function toRawXY(x,y){
+    return [x*30, 300 - y*30]
+  }
+
+
+  boxes = Array(10).fill(9,0,10)
+  function drawBoxes(){
+    boxes.forEach((boxY,boxX)=>{
+      //   Draw a black box in the space where the click happened
+      ctx.fillStyle = 'black';
+      ctx.fillRect(boxX * canvas.width / 10, boxY * canvas.height / 10, canvas.width / 10, canvas.height / 10);
+    });
+  }
+
+  model = NeuralNet([1,2,1])
+  console.log(model.weights);
+
+  function drawPredictions(){
+    ctx.beginPath()
+    ctx.moveTo(...toRawXY(0,model.predict([0])))
+
+    for (b = 1; b <= 10; b = b + 1){
+      p = model.predict([b])
+      ctx.lineTo(...toRawXY(b,p))
+
+    }
+    ctx.stroke()
+  }
+
+
+
+
+
+  function drawCanvas(){
+    //  Clear the field
+    ctx.clearRect(0,0,canvas.width, canvas.height)
+    drawBoxes();
+    drawPredictions();
+  }
+
+  function getCanvasPosition(canvas, event){
+    const rect = canvas.getBoundingClientRect();
+    const x = event.x - rect.left;
+    const y = event.y - rect.top;
+    return {x:x,y:y}
+  }
+
+  isMouseDown = false;
+  mousePos = null;
+
+  canvas.addEventListener('mousedown', function(e){
+    isMouseDown = true;
+  });
+
+  canvas.addEventListener('mouseup', function(e){
+    isMouseDown = false;
+  });
+
+  canvas.addEventListener('mouseleave', e => {
+    isMouseDown = false;
+  });
+
+  canvas.addEventListener('mousemove', e => {
+    mousePos = getCanvasPosition(canvas,e)
+  });
+
+  function update(t){
+    console.log("tick");
+    if (isMouseDown){
+
+
+      boxX = Math.floor(mousePos.x * 10 / canvas.width)
+      boxY = Math.floor(mousePos.y * 10 / canvas.height)
+
+      boxes[boxX] = boxY;
+    }
+
+    drawCanvas()
+    window.requestAnimationFrame(update)
+  }
+
+  window.requestAnimationFrame(update)
+
+</script>
